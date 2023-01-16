@@ -1,9 +1,11 @@
 package streaming
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/nats-io/nats.go"
 	"github.com/sirupsen/logrus"
+	"nats-publisher/models"
 )
 
 var stream = "WH_ITEMS"
@@ -26,17 +28,17 @@ func (n *natsPublisher) Init() {
 	n.config = config
 	n.logger = logger
 
-	natsconn, err := nats.Connect(n.config.Address)
+	nc, err := nats.Connect(n.config.Address)
 	if err != nil {
 		n.logger.Error(err)
 	}
-	jetstream, err := natsconn.JetStream()
+	js, err := nc.JetStream()
 	if err != nil {
 		n.logger.Error(err)
 		return
 	}
 
-	_, err = jetstream.AddStream(&nats.StreamConfig{
+	_, err = js.AddStream(&nats.StreamConfig{
 		Name:     stream,
 		Subjects: []string{fmt.Sprintf("%s.*", stream)},
 	})
@@ -44,12 +46,16 @@ func (n *natsPublisher) Init() {
 		n.logger.Error(err)
 		return
 	}
-	n.nc = natsconn
-	n.js = jetstream
+	n.nc = nc
+	n.js = js
 
-	subscription, err := n.js.Subscribe(stream+".*", n.getMessage)
+}
 
+func (n *natsPublisher) Publish(order *models.Order) error {
+	orderData, err := json.Marshal(order)
 	if err != nil {
-		n.logger.Error(err)
+		return err
 	}
+	n.js.Publish(stream, orderData)
+	return nil
 }

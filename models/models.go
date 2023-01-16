@@ -55,5 +55,10 @@ type items struct {
 }
 
 func NewOrder() *Order {
-	return &Order{}
+	return &Order{
+		OrderUID: "1",
+		Delivery: delivery{
+			Name: "test",
+		},
+	}
 }
