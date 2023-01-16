@@ -28,7 +28,9 @@ func (n *natsPublisher) Init() {
 	n.config = config
 	n.logger = logger
 
+	n.logger.Info("connecting to nats-streaming-server...")
 	nc, err := nats.Connect(n.config.Address)
+	n.logger.Info("connected")
 	if err != nil {
 		n.logger.Error(err)
 	}
